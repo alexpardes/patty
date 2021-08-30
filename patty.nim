@@ -238,23 +238,20 @@ proc defineEquality(tp, body: NimNode, pub: bool = false): NimNode =
   result[2] = makeGenerics(tp)
   # result = getAst(compare(condition, tp))
 
-macro variant*(e, body: untyped): untyped =
-  result = newStmtList(defineTypes(e, body), defineEquality(e, body))
+proc genVariant*(e, body: NimNode, isExported: bool): NimNode =
+  result = newStmtList(defineTypes(e, body, isExported), defineEquality(e, body, isExported))
 
   for child in children(body):
     if child.kind != nnkCommentStmt:
-      result.add(defineConstructor(e, child))
+      result.add(defineConstructor(e, child, isExported))
   when defined(pattydebug):
     echo toStrLit(result)
+
+macro variant*(e, body: untyped): untyped =
+  genVariant(e, body, false)
 
 macro variantp*(e, body: untyped): untyped =
-  result = newStmtList(defineTypes(e, body, true), defineEquality(e, body, true))
-
-  for child in children(body):
-    if child.kind != nnkCommentStmt:
-      result.add(defineConstructor(e, child, true))
-  when defined(pattydebug):
-    echo toStrLit(result)
+  genVariant(e, body, true)
 
 
 ###########################################################
